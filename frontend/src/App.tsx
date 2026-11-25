@@ -127,7 +127,7 @@ export function App() {
   return (
     <div className="app-shell">
       <header className="top-bar">
-        <span className="brand-meta">ShopIA · v002-a</span>
+        <span className="brand-meta">ShopIA · v002-b</span>
         <div className="top-bar-actions">
           {models.length > 0 && (
             <select

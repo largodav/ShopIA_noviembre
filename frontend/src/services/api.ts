@@ -19,7 +19,7 @@ const DEMO_CARDS: InfoCard[] = [
     id: "demo-2",
     type: "suggestion",
     title: "Comparativa rápida de especificaciones",
-    subtitle: "Agente Asesor (v002-a)",
+    subtitle: "Agente Asesor (v002-b)",
     summary: "Cuando el backend local esté activo, verás aquí respuestas de Ollama en tiempo real.",
     tags: ["Ollama", "Agentes"],
   },
@@ -55,7 +55,7 @@ export async function fetchPredictions(
 ): Promise<PredictResponse> {
   const trimmed = query.trim();
   if (!trimmed) {
-    return { query: "", version: "v002-a", cards: [] };
+    return { query: "", version: "v002-b", cards: [] };
   }
 
   try {
@@ -83,7 +83,7 @@ export async function fetchPredictions(
     );
     return {
       query: trimmed,
-      version: "v002-a (offline-demo)",
+      version: "v002-b (offline-demo)",
       cards: filtered.length > 0 ? filtered : DEMO_CARDS,
     };
   }

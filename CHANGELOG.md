@@ -3,6 +3,11 @@
 Todas las modificaciones relevantes del proyecto se registran aquí.
 El control de versiones sigue el esquema `vXXX-letra` (empezando en `v001-a`).
 
+## [v002-b] - 2026-11-25
+### Desplegado
+- **Tailscale Funnel activo en HTTPS público:** `https://macbook-pro-de-david.tailc0179d.ts.net` conectado al backend local (`:8000`).
+- **Publicación en GitHub Pages (`largodav/ShopIA_noviembre`):** repositorio conectado en GitHub, variables de Actions configuradas (`VITE_API_BASE_URL`, `VITE_VAPID_PUBLIC_KEY`, `VITE_BASE_PATH`) y despliegue automático de la PWA en `https://largodav.github.io/ShopIA_noviembre/`.
+
 ## [v002-a] - 2026-11-25
 ### Añadido
 - **Detección y selector dinámico de modelos LLM locales (Ollama):**

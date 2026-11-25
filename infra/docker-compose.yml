@@ -29,7 +29,7 @@ services:
       db:
         condition: service_healthy
     environment:
-      APP_VERSION: ${APP_VERSION:-v002-a}
+      APP_VERSION: ${APP_VERSION:-v002-b}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173,https://largodav.github.io}
       DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-shopia}:${POSTGRES_PASSWORD:-shopia}@db:5432/${POSTGRES_DB:-shopia}
       # Por defecto apunta al Ollama nativo del host (ideal en Mac Apple Silicon y Windows con Ollama local).

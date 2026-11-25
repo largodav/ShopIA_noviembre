@@ -4,7 +4,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
-    app_version: str = "v002-a"
+    app_version: str = "v002-b"
     cors_origins: str = "http://localhost:5173,https://largodav.github.io"
 
     database_url: str = "postgresql+psycopg://shopia:shopia@db:5432/shopia"
