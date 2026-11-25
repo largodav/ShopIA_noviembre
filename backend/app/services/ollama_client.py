@@ -12,21 +12,42 @@ logger = logging.getLogger(__name__)
 
 def _extract_json_object(raw_text: str) -> dict[str, Any] | None:
     text = raw_text.strip()
-    if text.startswith("```"):
-        text = re.sub(r"^```(?:json)?\s*", "", text)
-        text = re.sub(r"\s*```$", "", text)
+    if not text:
+        return None
+
+    # 1. Try fenced code blocks first (handles models that emit ```json ... ```<channel|>```json ... ```)
+    fenced_blocks = re.findall(r"```(?:json)?\s*([\s\S]*?)\s*```", text, flags=re.IGNORECASE)
+    for block in reversed(fenced_blocks):
+        try:
+            parsed = json.loads(block.strip())
+            if isinstance(parsed, dict):
+                return parsed
+        except json.JSONDecodeError:
+            pass
+
+    # 2. Direct parse
     try:
         parsed = json.loads(text)
-        return parsed if isinstance(parsed, dict) else None
+        if isinstance(parsed, dict):
+            return parsed
     except json.JSONDecodeError:
-        match = re.search(r"\{.*\}", text, flags=re.DOTALL)
-        if not match:
-            return None
+        pass
+
+    # 3. Balanced JSON object scan via raw_decode (avoids greedy .* spanning multiple objects)
+    decoder = json.JSONDecoder()
+    idx = 0
+    while idx < len(text):
+        start = text.find("{", idx)
+        if start == -1:
+            break
         try:
-            parsed = json.loads(match.group(0))
-            return parsed if isinstance(parsed, dict) else None
+            parsed, _end = decoder.raw_decode(text, start)
+            if isinstance(parsed, dict):
+                return parsed
         except json.JSONDecodeError:
-            return None
+            pass
+        idx = start + 1
+    return None
 
 
 class OllamaClient:

@@ -3,6 +3,10 @@
 Todas las modificaciones relevantes del proyecto se registran aquí.
 El control de versiones sigue el esquema `vXXX-letra` (empezando en `v001-a`).
 
+## [v003-b] - 2026-11-25
+### Corregido
+- **Parser JSON para modelos con múltiples bloques / `<channel|>` (como `g-uncesored:latest`):** `_extract_json_object` ahora extrae bloques ` ```json ` de forma no codiciosa y usa `json.JSONDecoder.raw_decode` para aislar objetos JSON válidos sin fallar cuando el modelo emite varios bloques o etiquetas `<channel|>`.
+
 ## [v003-a] - 2026-11-25
 ### Añadido
 - **Identificación de host del backend en `/health` y en la UI:** el endpoint `/health` expone `host: { os, name }` (`BACKEND_HOST_OS`, `BACKEND_HOST_NAME`) y la barra superior muestra el estado en vivo junto al selector de modelo (`Windows · win-home-1` / `Mac` / `Modo local`).

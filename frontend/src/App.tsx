@@ -265,7 +265,7 @@ export function App() {
   return (
     <div className="app-shell">
       <header className="top-bar">
-        <span className="brand-meta">ShopIA · {backendHealth?.version || "v003-a"}</span>
+        <span className="brand-meta">ShopIA · {backendHealth?.version || "v003-b"}</span>
         <div className="top-bar-actions">
           <span
             className={`status-pill ${backendOnline ? "is-online" : "is-offline"}`}
