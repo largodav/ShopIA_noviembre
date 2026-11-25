@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.shopia.backend</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/zsh</string>
+        <string>-lc</string>
+        <string>docker compose -f "__INFRA_DIR__/docker-compose.yml" --env-file "__INFRA_DIR__/.env" up -d</string>
+    </array>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>StandardOutPath</key>
+    <string>/tmp/shopia-autostart.out.log</string>
+    <key>StandardErrorPath</key>
+    <string>/tmp/shopia-autostart.err.log</string>
+</dict>
+</plist>

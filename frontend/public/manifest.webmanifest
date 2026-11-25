@@ -1,0 +1,19 @@
+{
+  "name": "ShopIA",
+  "short_name": "ShopIA",
+  "description": "Asistente predictivo de electrónica de El Corte Inglés impulsado por agentes IA.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0b0c10",
+  "theme_color": "#0b0c10",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "./icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
