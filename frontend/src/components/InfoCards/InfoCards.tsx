@@ -19,15 +19,27 @@ export function InfoCards({ cards }: InfoCardsProps) {
             {card.price && <span className="info-card-price">{card.price}</span>}
           </div>
           <p className="info-card-summary">{card.summary}</p>
-          {card.tags && card.tags.length > 0 && (
-            <div className="info-card-tags">
-              {card.tags.map((tag) => (
-                <span key={tag} className="info-card-tag">
-                  {tag}
-                </span>
-              ))}
-            </div>
-          )}
+          <div className="info-card-footer">
+            {card.tags && card.tags.length > 0 && (
+              <div className="info-card-tags">
+                {card.tags.map((tag) => (
+                  <span key={tag} className="info-card-tag">
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            )}
+            {card.sourceUrl && (
+              <a
+                href={card.sourceUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="info-card-link"
+              >
+                El Corte Inglés →
+              </a>
+            )}
+          </div>
         </article>
       ))}
     </section>

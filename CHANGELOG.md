@@ -3,6 +3,18 @@
 Todas las modificaciones relevantes del proyecto se registran aquí.
 El control de versiones sigue el esquema `vXXX-letra` (empezando en `v001-a`).
 
+## [v002-a] - 2026-11-25
+### Añadido
+- **Detección y selector dinámico de modelos LLM locales (Ollama):**
+  - Endpoints `GET /api/v1/models/` (lista todos los modelos instalados en Ollama con tamaño y detalles) y `POST /api/v1/models/select`.
+  - Selector minimalista en la barra superior de la PWA para cambiar de modelo al vuelo sin reiniciar Docker.
+- **Conector de catálogo de electrónica de El Corte Inglés + PostgreSQL:**
+  - `eci_client.py` consulta el buscador público de electrónica de El Corte Inglés (parsing JSON-LD/HTML respetuoso con detección limpia de anti-bot) y almacena/actualiza resultados en la tabla `products`.
+  - Nuevos endpoints `POST /api/v1/products/sync` y `POST /api/v1/products/import`, y enlaces directos a El Corte Inglés en las tarjetas.
+- **Tailscale Funnel y GitHub Pages (`largodav/ShopIA_noviembre`):**
+  - Script `infra/tailscale/setup_funnel.sh` y guía de despliegue en `infra/tailscale/README.md`.
+  - `CORS_ORIGINS` preconfigurado para `https://largodav.github.io` y `VITE_BASE_PATH` por defecto en `/ShopIA_noviembre/`.
+
 ## [v001-b] - 2026-11-25
 ### Añadido
 - Repositorio Git inicializado en `codigo/` con etiqueta base `v001-a`.

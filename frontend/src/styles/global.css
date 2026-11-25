@@ -56,6 +56,7 @@ body,
   width: 100%;
   max-width: 720px;
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
   gap: 0.75rem;
@@ -64,6 +65,7 @@ body,
 
 .top-bar-actions {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 0.5rem;
 }
@@ -75,7 +77,8 @@ body,
   color: var(--text-secondary);
 }
 
-.pill-button {
+.pill-button,
+.pill-select {
   background: transparent;
   border: 1px solid var(--border-subtle);
   color: var(--text-secondary);
@@ -86,7 +89,20 @@ body,
   transition: color 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
 }
 
-.pill-button:hover {
+.pill-select {
+  max-width: 220px;
+  text-overflow: ellipsis;
+  outline: none;
+}
+
+.pill-select option {
+  background-color: var(--bg);
+  color: var(--text-primary);
+}
+
+.pill-button:hover,
+.pill-select:hover,
+.pill-select:focus {
   color: var(--text-primary);
   border-color: var(--line-input);
 }
@@ -204,11 +220,19 @@ body,
   color: var(--text-secondary);
 }
 
+.info-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+
 .info-card-tags {
   display: flex;
   flex-wrap: wrap;
   gap: 0.4rem;
-  margin-top: 0.2rem;
 }
 
 .info-card-tag {
@@ -217,4 +241,18 @@ body,
   border: 1px solid var(--border-subtle);
   border-radius: 999px;
   padding: 0.15rem 0.55rem;
+}
+
+.info-card-link {
+  font-size: 0.76rem;
+  color: var(--text-primary);
+  text-decoration: none;
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: 1px;
+  transition: border-color 0.2s ease, opacity 0.2s ease;
+}
+
+.info-card-link:hover {
+  border-bottom-color: var(--line-input-focus);
+  opacity: 0.85;
 }

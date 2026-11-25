@@ -15,5 +15,21 @@ export interface InfoCard {
 export interface PredictResponse {
   query: string;
   version: string;
+  ollamaActive?: boolean;
+  model?: string | null;
   cards: InfoCard[];
+}
+
+export interface LocalModel {
+  name: string;
+  size_gb?: number | null;
+  family?: string | null;
+  parameter_size?: string | null;
+  quantization?: string | null;
+}
+
+export interface ModelsResponse {
+  reachable: boolean;
+  selected_model: string;
+  models: LocalModel[];
 }

@@ -1,4 +1,4 @@
-import type { InfoCard, PredictResponse } from "../types/shopia";
+import type { InfoCard, ModelsResponse, PredictResponse } from "../types/shopia";
 
 export const API_BASE_URL = (
   import.meta.env.VITE_API_BASE_URL || "http://localhost:8000"
@@ -19,24 +19,51 @@ const DEMO_CARDS: InfoCard[] = [
     id: "demo-2",
     type: "suggestion",
     title: "Comparativa rápida de especificaciones",
-    subtitle: "Agente Asesor (v001-b)",
+    subtitle: "Agente Asesor (v002-a)",
     summary: "Cuando el backend local esté activo, verás aquí respuestas de Ollama en tiempo real.",
     tags: ["Ollama", "Agentes"],
   },
 ];
 
+export async function fetchLocalModels(): Promise<ModelsResponse> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/v1/models/`);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    return (await response.json()) as ModelsResponse;
+  } catch {
+    return { reachable: false, selected_model: "", models: [] };
+  }
+}
+
+export async function selectLocalModel(model: string): Promise<boolean> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/v1/models/select`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ model }),
+    });
+    return response.ok;
+  } catch {
+    return false;
+  }
+}
+
 export async function fetchPredictions(
   query: string,
+  model?: string,
   signal?: AbortSignal
 ): Promise<PredictResponse> {
   const trimmed = query.trim();
   if (!trimmed) {
-    return { query: "", version: "v001-b", cards: [] };
+    return { query: "", version: "v002-a", cards: [] };
   }
 
   try {
+    const params = new URLSearchParams({ q: trimmed });
+    if (model) params.set("model", model);
+
     const response = await fetch(
-      `${API_BASE_URL}/api/v1/search/predict?q=${encodeURIComponent(trimmed)}`,
+      `${API_BASE_URL}/api/v1/search/predict?${params.toString()}`,
       { signal }
     );
     if (!response.ok) {
@@ -56,7 +83,7 @@ export async function fetchPredictions(
     );
     return {
       query: trimmed,
-      version: "v001-b (offline-demo)",
+      version: "v002-a (offline-demo)",
       cards: filtered.length > 0 ? filtered : DEMO_CARDS,
     };
   }

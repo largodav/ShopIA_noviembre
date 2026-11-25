@@ -30,21 +30,45 @@ def _extract_json_object(raw_text: str) -> dict[str, Any] | None:
 
 
 class OllamaClient:
-    """Cliente asíncrono hacia Ollama local (Mac Apple Silicon o Windows NVIDIA)."""
+    """Cliente asíncrono hacia Ollama local con descubrimiento y selección dinámica de modelos."""
 
     def __init__(self) -> None:
         self.base_url = settings.ollama_base_url.rstrip("/")
+        self.selected_model: str = settings.ollama_advisor_model
 
-    async def check_status(self) -> tuple[bool, list[str]]:
+    def set_selected_model(self, model_name: str) -> str:
+        self.selected_model = model_name.strip()
+        return self.selected_model
+
+    async def list_models_detailed(self) -> tuple[bool, list[dict[str, Any]]]:
         try:
-            async with httpx.AsyncClient(timeout=2.5) as client:
+            async with httpx.AsyncClient(timeout=3.0) as client:
                 resp = await client.get(f"{self.base_url}/api/tags")
                 resp.raise_for_status()
                 data = resp.json()
-                models = [m.get("name", "") for m in data.get("models", []) if m.get("name")]
+                models = []
+                for m in data.get("models", []):
+                    name = m.get("name")
+                    if not name:
+                        continue
+                    size_bytes = m.get("size") or 0
+                    details = m.get("details") or {}
+                    models.append(
+                        {
+                            "name": name,
+                            "size_gb": round(size_bytes / (1024**3), 2) if size_bytes else None,
+                            "family": details.get("family"),
+                            "parameter_size": details.get("parameter_size"),
+                            "quantization": details.get("quantization_level"),
+                        }
+                    )
                 return True, models
         except Exception:
             return False, []
+
+    async def check_status(self) -> tuple[bool, list[str]]:
+        ok, detailed = await self.list_models_detailed()
+        return ok, [m["name"] for m in detailed]
 
     async def chat_json(
         self,

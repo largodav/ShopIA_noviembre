@@ -18,15 +18,22 @@ Cuando el usuario escribe una búsqueda predictiva, devuelve ÚNICAMENTE un JSON
     }
   ]
 }
-No inventes URLs ni precios exactos en stock si no están en el catálogo; usa rangos orientativos si ayuda."""
+Si ya hay productos reales de El Corte Inglés en el contexto, enfoca tus tarjetas en compararlos o destacar qué revisar antes de comprar. No inventes URLs ni stock exacto."""
 
 
 class AdvisorAgent:
-    """Agente encargado de sintetizar tarjetas predictivas con Ollama."""
+    """Agente encargado de sintetizar tarjetas predictivas con el modelo Ollama seleccionado."""
 
     async def build_cards(
-        self, query: str, intent: dict[str, Any], products: list[dict[str, Any]]
-    ) -> tuple[list[InfoCard], bool]:
+        self,
+        query: str,
+        intent: dict[str, Any],
+        products: list[dict[str, Any]],
+        eci_meta: dict[str, Any],
+        model_override: str | None = None,
+    ) -> tuple[list[InfoCard], bool, str]:
+        active_model = (model_override or ollama_client.selected_model).strip()
+
         cards: list[InfoCard] = [
             InfoCard(
                 id=item["id"],
@@ -42,19 +49,24 @@ class AdvisorAgent:
             for item in products
         ]
 
+        products_context = "\n".join(
+            f"- {p['title']} ({p.get('price') or 'sin precio'})" for p in products[:4]
+        )
         user_prompt = (
             f"Consulta: {query}\n"
             f"Intención detectada: {intent.get('intent')}\n"
             f"Categoría: {intent.get('category')}\n"
-            f"Productos ya encontrados en BD local: {len(products)}"
+            f"Productos reales encontrados ({len(products)}):\n{products_context or 'Ninguno en caché todavía'}"
         )
 
         llm_response = await ollama_client.chat_json(
-            model=settings.ollama_advisor_model,
+            model=active_model,
             system_prompt=ADVISOR_SYSTEM_PROMPT,
             user_prompt=user_prompt,
             temperature=0.3,
         )
+
+        search_url = eci_meta.get("search_url")
 
         if llm_response and isinstance(llm_response.get("cards"), list):
             for idx, raw_card in enumerate(llm_response["cards"][:3]):
@@ -68,14 +80,17 @@ class AdvisorAgent:
                         id=f"ollama-card-{idx + 1}",
                         type=card_type,
                         title=str(raw_card["title"])[:120],
-                        subtitle=str(raw_card.get("subtitle") or f"Agente ShopIA · {intent.get('category')}"),
+                        subtitle=str(
+                            raw_card.get("subtitle") or f"Agente ShopIA · {intent.get('category')}"
+                        ),
                         summary=str(raw_card.get("summary") or "")[:320],
                         price=str(raw_card["price"]) if raw_card.get("price") else None,
                         category=str(intent.get("category") or "Electrónica"),
+                        sourceUrl=search_url if idx == 0 and not products else None,
                         tags=[str(t)[:24] for t in (raw_card.get("tags") or [])[:4]],
                     )
                 )
-            return cards, True
+            return cards, True, active_model
 
         cards.append(
             InfoCard(
@@ -84,11 +99,12 @@ class AdvisorAgent:
                 title=f"Búsqueda registrada: «{query}»",
                 subtitle=f"Backend {settings.app_version} · Ollama no disponible",
                 summary=(
-                    f"No se pudo conectar con Ollama en {settings.ollama_base_url} "
-                    f"(modelo {settings.ollama_advisor_model}). Inicia Ollama en tu equipo para activar las respuestas IA."
+                    f"No se pudo obtener respuesta de Ollama en {settings.ollama_base_url} "
+                    f"(modelo {active_model}). Comprueba que Ollama está activo."
                 ),
                 category=str(intent.get("category") or "Electrónica"),
+                sourceUrl=search_url,
                 tags=["PostgreSQL OK", "Ollama Offline"],
             )
         )
-        return cards, False
+        return cards, False, active_model
