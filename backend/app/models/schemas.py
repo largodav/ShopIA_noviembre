@@ -20,9 +20,22 @@ class InfoCard(BaseModel):
 class PredictResponse(BaseModel):
     query: str
     version: str
+    ollamaActive: bool = False
+    model: str | None = None
     cards: list[InfoCard]
 
 
 class PushSubscriptionPayload(BaseModel):
     endpoint: str
     keys: dict[str, str]
+    userAgent: str | None = None
+
+
+class PushUnsubscribePayload(BaseModel):
+    endpoint: str
+
+
+class PushTestRequest(BaseModel):
+    title: str = "ShopIA"
+    body: str = "Notificación Push enviada desde tu backend local (v001-b)."
+    url: str = "./"

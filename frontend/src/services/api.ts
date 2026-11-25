@@ -1,9 +1,8 @@
 import type { InfoCard, PredictResponse } from "../types/shopia";
 
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "http://localhost:8000").replace(
-  /\/$/,
-  ""
-);
+export const API_BASE_URL = (
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:8000"
+).replace(/\/$/, "");
 
 const DEMO_CARDS: InfoCard[] = [
   {
@@ -20,8 +19,8 @@ const DEMO_CARDS: InfoCard[] = [
     id: "demo-2",
     type: "suggestion",
     title: "Comparativa rápida de especificaciones",
-    subtitle: "Agente Asesor (v001-a)",
-    summary: "Cuando conectes el backend Ollama, aquí aparecerán respuestas generadas en tiempo real.",
+    subtitle: "Agente Asesor (v001-b)",
+    summary: "Cuando el backend local esté activo, verás aquí respuestas de Ollama en tiempo real.",
     tags: ["Ollama", "Agentes"],
   },
 ];
@@ -32,7 +31,7 @@ export async function fetchPredictions(
 ): Promise<PredictResponse> {
   const trimmed = query.trim();
   if (!trimmed) {
-    return { query: "", version: "v001-a", cards: [] };
+    return { query: "", version: "v001-b", cards: [] };
   }
 
   try {
@@ -48,7 +47,6 @@ export async function fetchPredictions(
     if ((err as Error).name === "AbortError") {
       throw err;
     }
-    // Fallback local de demostración para v001-a si el backend aún no está levantado
     const q = trimmed.toLowerCase();
     const filtered = DEMO_CARDS.filter(
       (c) =>
@@ -58,7 +56,7 @@ export async function fetchPredictions(
     );
     return {
       query: trimmed,
-      version: "v001-a (offline-demo)",
+      version: "v001-b (offline-demo)",
       cards: filtered.length > 0 ? filtered : DEMO_CARDS,
     };
   }

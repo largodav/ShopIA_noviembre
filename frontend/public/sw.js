@@ -1,5 +1,5 @@
-// ShopIA Service Worker (v001-a)
-const CACHE_NAME = "shopia-v001-a";
+// ShopIA Service Worker (v001-b)
+const CACHE_NAME = "shopia-v001-b";
 const APP_SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icons/icon.svg"];
 
 self.addEventListener("install", (event) => {

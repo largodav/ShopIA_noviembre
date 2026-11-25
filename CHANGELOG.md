@@ -3,6 +3,14 @@
 Todas las modificaciones relevantes del proyecto se registran aquí.
 El control de versiones sigue el esquema `vXXX-letra` (empezando en `v001-a`).
 
+## [v001-b] - 2026-11-25
+### Añadido
+- Repositorio Git inicializado en `codigo/` con etiqueta base `v001-a`.
+- Cambio de tema claro/oscuro en el frontend PWA con persistencia en `localStorage` y `theme-color` dinámico.
+- **PostgreSQL + `pgvector`:** creación automática de extensión `vector` y tablas `products`, `search_history`, `push_subscriptions` y `price_alerts`.
+- **Agentes conectados a Ollama:** cliente asíncrono (`ollama_client.py`) configurado por defecto con `gemma4-e2b-uncensored:latest` (parametrizable por rol en `infra/.env`), `IntentAgent` y `AdvisorAgent` con salida JSON estructurada y fallback si Ollama está detenido.
+- **Web Push real (VAPID):** endpoints `/api/v1/notifications/vapid-public-key`, `/subscribe`, `/unsubscribe` y `/test` con persistencia en PostgreSQL, script `backend/scripts/generate_vapid.py` y suscripción real `PushManager` desde la PWA.
+
 ## [v001-a] - 2026-11-25
 ### Añadido
 - Estructura inicial del proyecto ShopIA dentro de `codigo/`.

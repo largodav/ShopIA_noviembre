@@ -4,8 +4,8 @@ import { InfoCards } from "./components/InfoCards/InfoCards";
 import { fetchPredictions } from "./services/api";
 import {
   isNotificationSupported,
-  requestNotificationPermission,
-  sendLocalTestNotification,
+  subscribeToWebPush,
+  triggerBackendTestPush,
 } from "./services/notifications";
 import type { InfoCard } from "./types/shopia";
 
@@ -27,6 +27,7 @@ export function App() {
   const [notifStatus, setNotifStatus] = useState<NotificationPermission>(
     isNotificationSupported() ? Notification.permission : "denied"
   );
+  const [pushSubscribed, setPushSubscribed] = useState(false);
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
@@ -62,7 +63,7 @@ export function App() {
       } finally {
         setIsLoading(false);
       }
-    }, 240);
+    }, 350);
 
     return () => {
       window.clearTimeout(timer);
@@ -71,17 +72,26 @@ export function App() {
   }, [query]);
 
   const handleEnableNotifications = async () => {
-    const permission = await requestNotificationPermission();
+    const { permission, subscribed } = await subscribeToWebPush();
     setNotifStatus(permission);
-    if (permission === "granted") {
-      await sendLocalTestNotification();
+    setPushSubscribed(subscribed);
+    if (subscribed) {
+      await triggerBackendTestPush();
     }
+  };
+
+  const handleTestPush = async () => {
+    if (!pushSubscribed) {
+      const { subscribed } = await subscribeToWebPush();
+      setPushSubscribed(subscribed);
+    }
+    await triggerBackendTestPush();
   };
 
   return (
     <div className="app-shell">
       <header className="top-bar">
-        <span className="brand-meta">ShopIA · v001-a</span>
+        <span className="brand-meta">ShopIA · v001-b</span>
         <div className="top-bar-actions">
           <button
             type="button"
@@ -91,15 +101,20 @@ export function App() {
           >
             {theme === "dark" ? "Tema claro" : "Tema oscuro"}
           </button>
-          {isNotificationSupported() && (
-            <button
-              type="button"
-              className="pill-button"
-              onClick={handleEnableNotifications}
-            >
-              {notifStatus === "granted" ? "Notificaciones activas" : "Activar notificaciones"}
-            </button>
-          )}
+          {isNotificationSupported() &&
+            (notifStatus === "granted" ? (
+              <button type="button" className="pill-button" onClick={handleTestPush}>
+                Probar Push
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="pill-button"
+                onClick={handleEnableNotifications}
+              >
+                Activar notificaciones
+              </button>
+            ))}
         </div>
       </header>
 
