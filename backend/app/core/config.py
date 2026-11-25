@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     ollama_fast_model: str = "gemma4-e2b-uncensored:latest"
     ollama_advisor_model: str = "gemma4-e2b-uncensored:latest"
     ollama_embed_model: str = "nomic-embed-text"
-    ollama_timeout_seconds: float = 45.0
+    ollama_timeout_seconds: float = 120.0
 
     vapid_public_key: str = ""
     vapid_private_key: str = ""
