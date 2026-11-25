@@ -3,6 +3,13 @@
 Todas las modificaciones relevantes del proyecto se registran aquí.
 El control de versiones sigue el esquema `vXXX-letra` (empezando en `v001-a`).
 
+## [v003-a] - 2026-11-25
+### Añadido
+- **Identificación de host del backend en `/health` y en la UI:** el endpoint `/health` expone `host: { os, name }` (`BACKEND_HOST_OS`, `BACKEND_HOST_NAME`) y la barra superior muestra el estado en vivo junto al selector de modelo (`Windows · win-home-1` / `Mac` / `Modo local`).
+- **Modo local ligero en dispositivo (Android/iOS) + sincronización:** caché de búsquedas y catálogo local en `localStorage`, cola de sincronización automática/manual (`Sincronizar (N)`) al reconectar con el backend y Service Worker `shopia-v003-a` con caché de shell y assets.
+- **Autenticación sencilla de usuario único:** `POST /api/v1/auth/login` y `GET /api/v1/auth/status` con tokens HMAC-SHA256 de larga duración (90 días) persistidos en el navegador para no pedir acceso constantemente, manteniendo el modo local operativo sin conexión.
+- **Soporte multi-proyecto en Windows:** `BACKEND_PORT=8001` y Tailscale Funnel en `:8443` para convivir con otros servicios locales en `:8000`.
+
 ## [v002-b] - 2026-11-25
 ### Desplegado
 - **Tailscale Funnel activo en HTTPS público:** `https://macbook-pro-de-david.tailc0179d.ts.net` conectado al backend local (`:8000`).

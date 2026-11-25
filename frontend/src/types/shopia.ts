@@ -17,6 +17,7 @@ export interface PredictResponse {
   version: string;
   ollamaActive?: boolean;
   model?: string | null;
+  offline?: boolean;
   cards: InfoCard[];
 }
 
@@ -32,4 +33,32 @@ export interface ModelsResponse {
   reachable: boolean;
   selected_model: string;
   models: LocalModel[];
+}
+
+export interface BackendHostInfo {
+  os: string;
+  name: string;
+}
+
+export interface BackendHealth {
+  status: string;
+  service: string;
+  version: string;
+  host?: BackendHostInfo;
+  auth_enabled?: boolean;
+  ollama?: {
+    url?: string;
+    reachable: boolean;
+    selected_model?: string;
+    available_models_count?: number;
+  };
+  web_push_configured?: boolean;
+}
+
+export interface SyncQueueItem {
+  id: string;
+  kind: "search" | "model";
+  query?: string;
+  model?: string;
+  createdAt: number;
 }

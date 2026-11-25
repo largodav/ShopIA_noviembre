@@ -4,8 +4,17 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
-    app_version: str = "v002-b"
+    app_version: str = "v003-a"
     cors_origins: str = "http://localhost:5173,https://largodav.github.io"
+
+    backend_host_os: str = "Windows"
+    backend_host_name: str = "win-home-1"
+
+    auth_enabled: bool = True
+    auth_username: str = "david"
+    auth_password: str = "shopia2026"
+    auth_secret: str = "shopia-local-dev-secret-change-me"
+    auth_token_ttl_days: int = 90
 
     database_url: str = "postgresql+psycopg://shopia:shopia@db:5432/shopia"
 

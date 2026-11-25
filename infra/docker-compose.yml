@@ -29,8 +29,15 @@ services:
       db:
         condition: service_healthy
     environment:
-      APP_VERSION: ${APP_VERSION:-v002-b}
+      APP_VERSION: ${APP_VERSION:-v003-a}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173,https://largodav.github.io}
+      BACKEND_HOST_OS: ${BACKEND_HOST_OS:-Windows}
+      BACKEND_HOST_NAME: ${BACKEND_HOST_NAME:-win-home-1}
+      AUTH_ENABLED: ${AUTH_ENABLED:-true}
+      AUTH_USERNAME: ${AUTH_USERNAME:-david}
+      AUTH_PASSWORD: ${AUTH_PASSWORD:-shopia2026}
+      AUTH_SECRET: ${AUTH_SECRET:-shopia-local-dev-secret-change-me}
+      AUTH_TOKEN_TTL_DAYS: ${AUTH_TOKEN_TTL_DAYS:-90}
       DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-shopia}:${POSTGRES_PASSWORD:-shopia}@db:5432/${POSTGRES_DB:-shopia}
       # Por defecto apunta al Ollama nativo del host (ideal en Mac Apple Silicon y Windows con Ollama local).
       # Si activas el perfil "nvidia", cambia OLLAMA_BASE_URL=http://ollama:11434 en infra/.env

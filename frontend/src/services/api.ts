@@ -1,36 +1,131 @@
-import type { InfoCard, ModelsResponse, PredictResponse } from "../types/shopia";
+import type { BackendHealth, ModelsResponse, PredictResponse } from "../types/shopia";
+import {
+  clearAuthSession,
+  enqueueModelSync,
+  enqueueSearchSync,
+  getAuthToken,
+  getSyncQueue,
+  removeSyncItems,
+  saveCachedSearch,
+  searchLocalCatalog,
+  setAuthSession,
+} from "./localStore";
 
 export const API_BASE_URL = (
   import.meta.env.VITE_API_BASE_URL || "http://localhost:8000"
 ).replace(/\/$/, "");
 
-const DEMO_CARDS: InfoCard[] = [
-  {
-    id: "demo-1",
-    type: "product",
-    title: "Televisor OLED 55\" 4K Smart TV",
-    subtitle: "El Corte Inglés · Electrónica",
-    summary: "Ejemplo de tarjeta predictiva (modo local sin conexión al backend).",
-    price: "1.199 €",
-    category: "TV y Vídeo",
-    tags: ["OLED", "4K", "HDMI 2.1"],
-  },
-  {
-    id: "demo-2",
-    type: "suggestion",
-    title: "Comparativa rápida de especificaciones",
-    subtitle: "Agente Asesor (v002-b)",
-    summary: "Cuando el backend local esté activo, verás aquí respuestas de Ollama en tiempo real.",
-    tags: ["Ollama", "Agentes"],
-  },
-];
+export class UnauthorizedError extends Error {
+  constructor(message = "Autenticación requerida") {
+    super(message);
+    this.name = "UnauthorizedError";
+  }
+}
+
+export function getAuthHeaders(): Record<string, string> {
+  const token = getAuthToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
+export async function fetchBackendHealth(): Promise<{
+  online: boolean;
+  health?: BackendHealth;
+}> {
+  const controller = new AbortController();
+  const timer = window.setTimeout(() => controller.abort(), 3500);
+  try {
+    const response = await fetch(`${API_BASE_URL}/health`, {
+      signal: controller.signal,
+      cache: "no-store",
+    });
+    if (!response.ok) return { online: false };
+    const health = (await response.json()) as BackendHealth;
+    return { online: true, health };
+  } catch {
+    return { online: false };
+  } finally {
+    window.clearTimeout(timer);
+  }
+}
+
+export async function checkAuthStatus(): Promise<{
+  authEnabled: boolean;
+  authenticated: boolean;
+  offline: boolean;
+}> {
+  const controller = new AbortController();
+  const timer = window.setTimeout(() => controller.abort(), 3500);
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/v1/auth/status`, {
+      headers: getAuthHeaders(),
+      signal: controller.signal,
+      cache: "no-store",
+    });
+    if (!response.ok) {
+      return { authEnabled: true, authenticated: false, offline: false };
+    }
+    const data = (await response.json()) as {
+      auth_enabled: boolean;
+      authenticated: boolean;
+    };
+    if (data.auth_enabled && !data.authenticated) {
+      clearAuthSession();
+    }
+    return {
+      authEnabled: data.auth_enabled,
+      authenticated: data.authenticated,
+      offline: false,
+    };
+  } catch {
+    // Offline: keep existing local token valid for local mode
+    return {
+      authEnabled: true,
+      authenticated: Boolean(getAuthToken()),
+      offline: true,
+    };
+  } finally {
+    window.clearTimeout(timer);
+  }
+}
+
+export async function loginWithCredentials(
+  username: string,
+  password: string
+): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/v1/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password }),
+    });
+    if (!response.ok) {
+      const errData = (await response.json().catch(() => ({}))) as { detail?: string };
+      return { ok: false, error: errData.detail || "Credenciales incorrectas." };
+    }
+    const data = (await response.json()) as {
+      access_token: string;
+      username: string;
+    };
+    setAuthSession(data.access_token, data.username);
+    return { ok: true };
+  } catch {
+    return { ok: false, error: "No se pudo conectar con el backend." };
+  }
+}
 
 export async function fetchLocalModels(): Promise<ModelsResponse> {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/v1/models/`);
+    const response = await fetch(`${API_BASE_URL}/api/v1/models/`, {
+      headers: getAuthHeaders(),
+    });
+    if (response.status === 401) {
+      clearAuthSession();
+      throw new UnauthorizedError();
+    }
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     return (await response.json()) as ModelsResponse;
-  } catch {
+  } catch (err) {
+    if (err instanceof UnauthorizedError) throw err;
     return { reachable: false, selected_model: "", models: [] };
   }
 }
@@ -39,11 +134,17 @@ export async function selectLocalModel(model: string): Promise<boolean> {
   try {
     const response = await fetch(`${API_BASE_URL}/api/v1/models/select`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...getAuthHeaders() },
       body: JSON.stringify({ model }),
     });
+    if (response.status === 401) {
+      clearAuthSession();
+      throw new UnauthorizedError();
+    }
     return response.ok;
-  } catch {
+  } catch (err) {
+    if (err instanceof UnauthorizedError) throw err;
+    enqueueModelSync(model);
     return false;
   }
 }
@@ -55,7 +156,7 @@ export async function fetchPredictions(
 ): Promise<PredictResponse> {
   const trimmed = query.trim();
   if (!trimmed) {
-    return { query: "", version: "v002-b", cards: [] };
+    return { query: "", version: "v003-a", cards: [] };
   }
 
   try {
@@ -64,27 +165,68 @@ export async function fetchPredictions(
 
     const response = await fetch(
       `${API_BASE_URL}/api/v1/search/predict?${params.toString()}`,
-      { signal }
+      { signal, headers: getAuthHeaders() }
     );
+    if (response.status === 401) {
+      clearAuthSession();
+      throw new UnauthorizedError();
+    }
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}`);
     }
-    return (await response.json()) as PredictResponse;
+    const data = (await response.json()) as PredictResponse;
+    saveCachedSearch(trimmed, data.cards);
+    return data;
   } catch (err) {
-    if ((err as Error).name === "AbortError") {
+    if ((err as Error).name === "AbortError" || err instanceof UnauthorizedError) {
       throw err;
     }
-    const q = trimmed.toLowerCase();
-    const filtered = DEMO_CARDS.filter(
-      (c) =>
-        c.title.toLowerCase().includes(q) ||
-        c.summary.toLowerCase().includes(q) ||
-        (c.tags || []).some((t) => t.toLowerCase().includes(q))
-    );
+    enqueueSearchSync(trimmed, model);
     return {
       query: trimmed,
-      version: "v002-b (offline-demo)",
-      cards: filtered.length > 0 ? filtered : DEMO_CARDS,
+      version: "modo-local",
+      offline: true,
+      cards: searchLocalCatalog(trimmed),
     };
   }
+}
+
+export async function syncPendingQueue(): Promise<{
+  synced: number;
+  remaining: number;
+}> {
+  const queue = getSyncQueue();
+  if (queue.length === 0) return { synced: 0, remaining: 0 };
+
+  const doneIds: string[] = [];
+  for (const item of queue) {
+    try {
+      if (item.kind === "model" && item.model) {
+        const resp = await fetch(`${API_BASE_URL}/api/v1/models/select`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", ...getAuthHeaders() },
+          body: JSON.stringify({ model: item.model }),
+        });
+        if (resp.ok) doneIds.push(item.id);
+      } else if (item.kind === "search" && item.query) {
+        const params = new URLSearchParams({ q: item.query });
+        if (item.model) params.set("model", item.model);
+        const resp = await fetch(
+          `${API_BASE_URL}/api/v1/search/predict?${params.toString()}`,
+          { headers: getAuthHeaders() }
+        );
+        if (resp.ok) {
+          const data = (await resp.json()) as PredictResponse;
+          saveCachedSearch(item.query, data.cards);
+          doneIds.push(item.id);
+        }
+      }
+    } catch {
+      break;
+    }
+  }
+
+  removeSyncItems(doneIds);
+  const remaining = getSyncQueue().length;
+  return { synced: doneIds.length, remaining };
 }

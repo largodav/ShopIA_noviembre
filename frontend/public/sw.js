@@ -1,5 +1,5 @@
-// ShopIA Service Worker (v002-b)
-const CACHE_NAME = "shopia-v002-b";
+// ShopIA Service Worker (v003-a)
+const CACHE_NAME = "shopia-v003-a";
 const APP_SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icons/icon.svg"];
 
 self.addEventListener("install", (event) => {
@@ -20,8 +20,20 @@ self.addEventListener("activate", (event) => {
 
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
+  const url = new URL(event.request.url);
+  // API calls are handled by the app's offline localStore fallback
+  if (url.pathname.includes("/api/") || url.pathname === "/health") return;
+
   event.respondWith(
-    fetch(event.request).catch(() => caches.match(event.request))
+    fetch(event.request)
+      .then((response) => {
+        if (response.ok && url.origin === self.location.origin) {
+          const copy = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+        }
+        return response;
+      })
+      .catch(() => caches.match(event.request))
   );
 });
 

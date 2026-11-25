@@ -1,4 +1,4 @@
-import { API_BASE_URL } from "./api";
+import { API_BASE_URL, getAuthHeaders } from "./api";
 
 export function isNotificationSupported(): boolean {
   return "Notification" in window && "serviceWorker" in navigator;
@@ -34,7 +34,9 @@ async function fetchVapidPublicKey(): Promise<string> {
   const envKey = import.meta.env.VITE_VAPID_PUBLIC_KEY;
   if (envKey) return envKey;
   try {
-    const resp = await fetch(`${API_BASE_URL}/api/v1/notifications/vapid-public-key`);
+    const resp = await fetch(`${API_BASE_URL}/api/v1/notifications/vapid-public-key`, {
+      headers: getAuthHeaders(),
+    });
     if (!resp.ok) return "";
     const data = (await resp.json()) as { publicKey?: string };
     return data.publicKey || "";
@@ -69,7 +71,7 @@ export async function subscribeToWebPush(): Promise<{
       if (json.endpoint && json.keys) {
         await fetch(`${API_BASE_URL}/api/v1/notifications/subscribe`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", ...getAuthHeaders() },
           body: JSON.stringify({
             endpoint: json.endpoint,
             keys: json.keys,
@@ -84,7 +86,7 @@ export async function subscribeToWebPush(): Promise<{
   }
 
   await registration.showNotification("ShopIA", {
-    body: "Notificaciones locales activadas (v001-b).",
+    body: "Notificaciones locales activadas (v003-a).",
     icon: "./icons/icon.svg",
   });
   return { permission, subscribed: false };
@@ -94,9 +96,9 @@ export async function triggerBackendTestPush(): Promise<boolean> {
   try {
     const resp = await fetch(`${API_BASE_URL}/api/v1/notifications/test`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...getAuthHeaders() },
       body: JSON.stringify({
-        title: "ShopIA · v001-b",
+        title: "ShopIA · v003-a",
         body: "Notificación Web Push real recibida desde tu backend local.",
         url: "./",
       }),
