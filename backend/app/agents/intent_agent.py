@@ -1,42 +1,40 @@
 from typing import Any
 
-from app.core.config import settings
-from app.services.ollama_client import ollama_client
 
-INTENT_SYSTEM_PROMPT = """Eres el agente de intención de ShopIA (electrónica de El Corte Inglés).
-Analiza la consulta breve del usuario y responde ÚNICAMENTE con un JSON válido con esta estructura exacta:
-{
-  "intent": "search" | "compare" | "recommend" | "price_check",
-  "category": "TV y Vídeo" | "Informática" | "Telefonía" | "Sonido" | "Fotografía" | "Gaming" | "Electrónica",
-  "keywords": ["palabra1", "palabra2"],
-  "max_price_eur": null
-}
-Sé conciso y preciso en español."""
+CATEGORY_RULES: list[tuple[str, tuple[str, ...]]] = [
+    ("TV y Vídeo", ("tv", "tele", "oled", "qled", "miniled", "proyector", "barra de sonido")),
+    ("Informática", ("portatil", "portátil", "macbook", "ordenador", "pc", "monitor", "tablet", "ipad", "ssd")),
+    ("Telefonía", ("movil", "móvil", "iphone", "samsung", "galaxy", "pixel", "xiaomi", "smartphone")),
+    ("Sonido", ("auricular", "cascos", "altavoz", "airpods", "sonos", "bose", "bluetooth")),
+    ("Fotografía", ("camara", "cámara", "objetivo", "reflex", "réflex", "canon", "sony alpha", "nikon")),
+    ("Gaming", ("ps5", "playstation", "xbox", "nintendo", "switch", "grafica", "gráfica", "rtx")),
+]
 
 
 class IntentAgent:
-    """Agente encargado de interpretar la intención de búsqueda predictiva usando Ollama."""
+    """Agente de intención ultrarrápido (<1ms) para no duplicar llamadas a Ollama en búsqueda predictiva."""
 
     async def analyze(self, query: str) -> tuple[dict[str, Any], bool]:
-        result = await ollama_client.chat_json(
-            model=settings.ollama_fast_model,
-            system_prompt=INTENT_SYSTEM_PROMPT,
-            user_prompt=f"Consulta del usuario: {query}",
-            temperature=0.1,
-        )
-        if result:
-            return {
-                "raw_query": query,
-                "intent": str(result.get("intent") or "search"),
-                "category": str(result.get("category") or "Electrónica"),
-                "keywords": result.get("keywords") if isinstance(result.get("keywords"), list) else [query],
-                "max_price_eur": result.get("max_price_eur"),
-            }, True
+        q = query.lower()
+
+        intent = "search"
+        if any(w in q for w in ("compar", " vs ", "diferencia", "mejor entre")):
+            intent = "compare"
+        elif any(w in q for w in ("recomiend", "cual compro", "cuál compro", "mejor ")):
+            intent = "recommend"
+        elif any(w in q for w in ("precio", "barato", "oferta", "euros", "€")):
+            intent = "price_check"
+
+        category = "Electrónica"
+        for cat, terms in CATEGORY_RULES:
+            if any(t in q for t in terms):
+                category = cat
+                break
 
         return {
             "raw_query": query,
-            "intent": "search",
-            "category": "Electrónica",
+            "intent": intent,
+            "category": category,
             "keywords": [w for w in query.split() if len(w) > 1] or [query],
             "max_price_eur": None,
         }, False

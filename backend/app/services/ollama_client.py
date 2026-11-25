@@ -52,12 +52,18 @@ class OllamaClient:
         system_prompt: str,
         user_prompt: str,
         temperature: float = 0.2,
+        num_predict: int = 900,
     ) -> dict[str, Any] | None:
         payload = {
             "model": model,
             "stream": False,
             "format": "json",
-            "options": {"temperature": temperature},
+            "think": False,
+            "keep_alive": "10m",
+            "options": {
+                "temperature": temperature,
+                "num_predict": num_predict,
+            },
             "messages": [
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt},
@@ -69,9 +75,12 @@ class OllamaClient:
                 resp.raise_for_status()
                 data = resp.json()
                 content = data.get("message", {}).get("content", "")
-                return _extract_json_object(content)
+                parsed = _extract_json_object(content)
+                if parsed is None:
+                    logger.warning("Ollama devolvió JSON inválido (%s): %s", model, content[:240])
+                return parsed
         except Exception as exc:
-            logger.warning("Ollama chat_json falló (%s): %s", model, exc)
+            logger.warning("Ollama chat_json falló (%s): %s: %s", model, type(exc).__name__, exc)
             return None
 
     async def embed(self, text: str) -> list[float] | None:
@@ -86,7 +95,12 @@ class OllamaClient:
                 embedding = resp.json().get("embedding")
                 return embedding if isinstance(embedding, list) else None
         except Exception as exc:
-            logger.warning("Ollama embed falló (%s): %s", settings.ollama_embed_model, exc)
+            logger.warning(
+                "Ollama embed falló (%s): %s: %s",
+                settings.ollama_embed_model,
+                type(exc).__name__,
+                exc,
+            )
             return None
 
 

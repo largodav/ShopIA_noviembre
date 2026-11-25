@@ -44,7 +44,7 @@ export function App() {
 
   useEffect(() => {
     const trimmed = query.trim();
-    if (!trimmed) {
+    if (trimmed.length < 3) {
       setCards([]);
       setIsLoading(false);
       return;
@@ -63,7 +63,7 @@ export function App() {
       } finally {
         setIsLoading(false);
       }
-    }, 350);
+    }, 600);
 
     return () => {
       window.clearTimeout(timer);
